@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ODEKAKE LOG</title>
+  <link rel="icon" href="favdog.png" type="image/png">
+  <style>
+    :root {
+      --bg-color: #F7F6F2;
+      --panel-bg: #FFFFFF;
+      --text-main: #2F3632;
+      --text-muted: #6E7772;
+      --color-naka-want: #C86D51;
+      --color-lars-want: #5B8FB9;
+      --color-grutto: #5A9A72;
+      --color-both-visited: #D4A359;
+      --color-brown: #8C6239;
+      --border-color: #E2E0D8;
+      --shadow: 0 4px 16px rgba(47, 54, 50, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 440px;
+      background: var(--panel-bg);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      z-index: 10;
+      box-shadow: var(--shadow);
+    }
+
+    .header {
+      padding: 16px 20px;
+      background: #2F3632;
+      color: #fff;
+    }
+
+    .header h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .header p {
+      font-size: 0.76rem;
+      opacity: 0.85;
+      margin-top: 3px;
+    }
+
+    .main-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      background: #FAF9F6;
+    }
+
+    .main-tab {
+      flex: 1;
+      padding: 11px 8px;
+      text-align: center;
+      font-size: 0.84rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .main-tab.active {
+      color: var(--text-main);
+      border-bottom-color: var(--color-both-visited);
+      background: #fff;
+    }
+
+    .tab-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+      display: none;
+      flex-direction: column;
+    }
+
+    .tab-content.active {
+      display: flex;
+    }
+
+    .controls {
+      margin-bottom: 14px;
+    }
+
+    .search-box {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 0.92rem;
+      outline: none;
+      margin-bottom: 8px;
+    }
+
+    .search-box:focus {
+      border-color: var(--color-both-visited);
+    }
+
+    .search-hint {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 3px;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .filter-btn {
+      padding: 7px 4px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: #fff;
+      font-size: 0.76rem;
+      cursor: pointer;
+      color: var(--text-main);
+      text-align: center;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+
+    .filter-btn.active {
+      background: var(--text-main);
+      color: #fff;
+      border-color: var(--text-main);
+    }
+
+    .sort-bar {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      align-items: center;
+      background: #FAF9F6;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+    }
+
+    .sort-bar label {
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .sort-select {
+      flex: 1;
+      padding: 4px 6px;
+      font-size: 0.76rem;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: #fff;
+      color: var(--text-main);
+      outline: none;
+    }
+
+    .spot-count-label {
+      font-size: 0.76rem;
+      font-weight: bold;
+      color: var(--text-muted);
+      margin: 8px 0 4px 2px;
+    }
+
+    .spot-card {
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .spot-card:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
+    }
+
+    .spot-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .spot-title-area {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .spot-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .spot-controls-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge {
+      font-size: 0.68rem;
+      padding: 2px 7px;
+      border-radius: 10px;
+      color: #fff;
+      white-space: nowrap;
+      font-weight: 600;
+    }
+
+    .badge-naka-want { background-color: var(--color-naka-want); }
+    .badge-lars-want { background-color: var(--color-lars-want); }
+    .badge-grutto { background-color: var(--color-grutto); }
+    .badge-both-visited { background-color: var(--color-both-visited); }
+
+    .spot-compact-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .spot-details {
+      display: none;
+      margin-top: 10px;
+      border-top: 1px dashed var(--border-color);
+      padding-top: 10px;
+    }
+
+    .spot-card.expanded .spot-details {
+      display: block;
+    }
+
+    .spot-ratings-summary {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 6px;
+      font-size: 0.82rem;
+      font-weight: bold;
+    }
+
+    .spot-memo-box {
+      background: #FAF9F6;
+      border-radius: 6px;
+      padding: 6px 8px;
+      margin-top: 6px;
+      font-size: 0.78rem;
+      color: var(--text-main);
+      line-height: 1.4;
+      white-space: pre-wrap;
+      border: 1px solid #E2E0D8;
+    }
+
+    .spot-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .btn-small {
+      font-size: 0.72rem;
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      background: #FAF9F6;
+      cursor: pointer;
+    }
+
+    .btn-delete { color: #C85151; }
+
+    .order-btn {
+      background: #FAF9F6;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
+    .order-btn:hover { background: #E2E0D8; }
+
+    .ai-card {
+      background: #FAF9F6;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 14px;
+      line-height: 1.5;
+      font-size: 0.86rem;
+    }
+
+    .ai-card h3 {
+      font-size: 0.92rem;
+      margin-bottom: 6px;
+      color: var(--text-main);
+    }
+
+    .btn-ai-refresh {
+      width: 100%;
+      padding: 11px;
+      background: var(--color-both-visited);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(212,163,89,0.3);
+    }
+    .btn-ai-refresh:hover {
+      opacity: 0.9;
+    }
+
+    .ai-suggestion-item {
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .match-tag {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #EFECE6;
+      color: #7A5C2E;
+      margin-bottom: 4px;
+    }
+
+    .footer-tools {
+      padding: 10px 20px;
+      border-top: 1px solid var(--border-color);
+      background: #FAF9F6;
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-sub {
+      flex: 1;
+      padding: 7px;
+      font-size: 0.74rem;
+      border: 1px solid var(--border-color);
+      background: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text-main);
+    }
+
+    #map {
+      flex: 1;
+      height: 100%;
+    }
+
+    .mobile-view-toggle {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+      background: #2F3632;
+      color: #fff;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+      body { flex-direction: column; }
+      .sidebar { width: 100%; height: 100vh; }
+      #map { width: 100%; height: 100vh; display: none; position: absolute; top: 0; left: 0; z-index: 5; }
+      .mobile-view-toggle { display: block; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar" id="sidebarPanel">
+    <div class="header">
+      <h1>🐕 ODEKAKE LOG</h1>
+      <p>Our special maps</p>
+    </div>
+
+    <div class="main-tabs">
+      <button class="main-tab active" onclick="switchTab('list', this)">🗺️ Spot List & Search</button>
+      <button class="main-tab" onclick="switchTab('ai', this)">✨ AI Recommendations</button>
+    </div>
+
+    <!-- タブ1：スポット一覧・検索 -->
+    <div id="tab-list" class="tab-content active" style="display:flex;">
+      <div class="controls">
+        <input id="pac-input" class="search-box" type="text" placeholder="📍 Search spot or address (World-wide)..." />
+        <div class="search-hint">💡 Search or click a place icon on the map to register</div>
+
+        <div class="filter-grid">
+          <button class="filter-btn active" onclick="setFilter('naka-want', this)">🟠 Naka Want</button>
+          <button class="filter-btn" onclick="setFilter('lars-want', this)">🔵 Lars Want</button>
+          <button class="filter-btn" onclick="setFilter('both-visited', this)">🟡 Visited</button>
+          <button class="filter-btn" onclick="setFilter('all', this)">ALL</button>
+          <button class="filter-btn" onclick="setFilter('grutto', this)">🟢 ぐるっと</button>
+          <button class="filter-btn" onclick="setFilter('grutto-done', this)">🟤 ぐるっと済</button>
+        </div>
+        
+        <input id="local-search" class="search-box" type="text" placeholder="🔍 Search saved logs..." oninput="renderAll()" style="margin-top: 8px;" />
+        
+        <div class="sort-bar">
+          <label>Sort:</label>
+          <select id="sortOrder" class="sort-select" onchange="renderAll()">
+            <option value="custom">Manual (Custom Order)</option>
+            <option value="date-desc">Newest Visited Date</option>
+            <option value="date-asc">Oldest Visited Date</option>
+          </select>
+        </div>
+
+        <div class="sort-bar" style="margin-top: 6px;">
+          <label>Display Lang:</label>
+          <select id="displayLang" class="sort-select" onchange="renderAll()">
+            <option value="original">🌐 Original (As registered)</option>
+            <option value="ja">🇯🇵 日本語 (Japanese)</option>
+            <option value="en">🇬🇧 English</option>
+          </select>
+        </div>
+
+        <div id="spotCountLabel" class="spot-count-label">読み込み中...</div>
+      </div>
+
+      <div id="spotList" style="flex:1; overflow-y:auto;"></div>
+    </div>
+
+    <!-- タブ2：AI Recommendations -->
+    <div id="tab-ai" class="tab-content">
+      <button class="btn-ai-refresh" onclick="triggerAiDiscovery()">✨ Analyze ★7-10 High-Rated Spots & Discover</button>
+      <div id="aiResultContainer">
+        <div class="ai-card">
+          <h3>💡 ★7〜10 High-Rated Learning Engine</h3>
+          <p>Analyzes the official Google Maps classification data (`types`) from spots rated ★7-10 in "Visited" and prioritizes spots that both of you would genuinely be interested in from cultural and scenic locations!</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-tools">
+      <button class="btn-sub" onclick="exportData()">📤 Export Data</button>
+      <button class="btn-sub" onclick="document.getElementById('importFile').click()">📥 Import Data</button>
+      <input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(event)" />
+    </div>
+  </div>
+
+  <div id="map"></div>
+
+  <button id="mobileToggleBtn" class="mobile-view-toggle" onclick="toggleMobileView()">🗺️ 地図を表示</button>
+
+  <script>
+    // ★★★ ここにステップ2でコピーした「ウェブアプリのURL」を貼り付けてください ★★★
+    const GAS_URL = 'https://script.google.com/macros/s/https://script.google.com/macros/s/AKfycbxvgWHqpxJ6oEwp-At3DFiPyXPHtOvq16WANK7eOUSzjcLeCmNofhhvgleZWlqK2709/exec/exec';
+
+    let map;
+    let markers = [];
+    let spots = [];
+    let currentFilter = 'naka-want';
+    let activeInfoWindow = null;
+    let tempSelectedPlaceTypes = []; 
+    let tempPlaceId = null;
+    let tempFetchedJaName = '';
+    let tempFetchedEnName = '';
+    let isMapModeMobile = false;
+
+    // サーバ（スプレッドシート）からデータを一括取得
+    async function fetchSpotsFromCloud() {
+      try {
+        const res = await fetch(GAS_URL);
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          spots = data.map(s => {
+            if (!s.nameJa) s.nameJa = s.name;
+            if (!s.nameEn) s.nameEn = s.name;
+            return s;
+          });
+        }
+      } catch (err) {
+        console.warn('Cloud sync load failed, fallback to empty/local:', err);
+      }
+      renderAll();
+    }
+
+    // サーバへデータを一括保存
+    async function syncSpotsToCloud() {
+      try {
+        await fetch(GAS_URL, {
+          method: 'POST',
+          body: JSON.stringify(spots)
+        });
+      } catch (err) {
+        console.error('Cloud sync save failed:', err);
+        alert('スプレッドシートへの保存に失敗しました。');
+      }
+    }
+
+    const CATEGORY_META = {
+      'naka-want':    { label: 'Naka Want', color: '#C86D51', badge: 'badge-naka-want' },
+      'lars-want':    { label: 'Lars Want', color: '#5B8FB9', badge: 'badge-lars-want' },
+      'grutto':       { label: 'ぐるっと',    color: '#5A9A72', badge: 'badge-grutto' },
+      'both-visited': { label: 'Visited',     color: '#D4A359', badge: 'badge-both-visited' },
+      'brown-pin':    { label: 'ぐるっと済',  color: '#8C6239', badge: 'badge-both-visited' }
+    };
+
+    const TYPE_LABELS_JA = {
+      'museum': '博物館・ミュージアム',
+      'art_gallery': '美術館・アート展示',
+      'historic_site': '史跡・歴史的建造物',
+      'tourist_attraction': 'ユニーク名所・ランドマーク',
+      'observation_deck': '展望台・タワー',
+      'park': '公園・景勝地',
+      'botanical_garden': '庭園・植物園',
+      'cultural_center': '文化・広報展示施設'
+    };
+
+    function getPinIcon(colorHex) {
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="44" viewBox="0 0 36 44">
+          <path d="M18 0C8.06 0 0 8.06 0 18c0 13.5 18 26 18 26s18-12.5 18-26C36 8.06 27.94 0 18 0z" fill="${colorHex}" stroke="#ffffff" stroke-width="2.5"/>
+          <circle cx="18" cy="17" r="6" fill="#ffffff"/>
+        </svg>`;
+      return {
+        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+        scaledSize: new google.maps.Size(34, 42),
+        anchor: new google.maps.Point(17, 42)
+      };
+    }
+
+    function toggleMobileView() {
+      const sidebar = document.getElementById('sidebarPanel');
+      const mapDiv = document.getElementById('map');
+      const btn = document.getElementById('mobileToggleBtn');
+
+      if (!isMapModeMobile) {
+        sidebar.style.display = 'none';
+        mapDiv.style.display = 'block';
+        btn.textContent = '📋 リストを表示';
+        isMapModeMobile = true;
+        if (map) google.maps.event.trigger(map, 'resize');
+      } else {
+        sidebar.style.display = 'flex';
+        mapDiv.style.display = 'none';
+        btn.textContent = '🗺️ 地図を表示';
+        isMapModeMobile = false;
+      }
+    }
+
+    async function initMap() {
+      const defaultCenter = { lat: 35.681236, lng: 139.767125 };
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: defaultCenter,
+        zoom: 12,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: true
+      });
+
+      const input = document.getElementById('pac-input');
+      const geocoder = new google.maps.Geocoder();
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const query = input.value.trim();
+          if (!query) return;
+
+          geocoder.geocode({ 
+            address: query,
+            bounds: map.getBounds()
+          }, async (results, status) => {
+            if (status === 'OK' && results[0]) {
+              const location = results[0].geometry.location;
+              map.panTo(location);
+              map.setZoom(15);
+
+              tempSelectedPlaceTypes = results[0].types || [];
+              tempPlaceId = results[0].place_id || null;
+              tempFetchedJaName = query;
+              tempFetchedEnName = query;
+
+              openRegistrationInfoWindow(query, location.lat(), location.lng(), null);
+              input.value = '';
+            } else {
+              alert('「' + query + '」が見つかりませんでした。正確な店名や住所で入力してみてください。');
+            }
+          });
+        }
+      });
+
+      map.addListener('click', async (e) => {
+        if (e.placeId) {
+          e.stop();
+          try {
+            const { Place } = await google.maps.importLibrary("places");
+            tempPlaceId = e.placeId;
+
+            const placeJa = new Place({ id: e.placeId, requestedLanguage: 'ja' });
+            await placeJa.fetchFields({ fields: ['displayName', 'location', 'types'] });
+
+            let enName = placeJa.displayName || '';
+            try {
+              const placeEn = new Place({ id: e.placeId, requestedLanguage: 'en' });
+              await placeEn.fetchFields({ fields: ['displayName'] });
+              enName = placeEn.displayName || placeJa.displayName || '';
+            } catch (err) {
+              console.warn('English name fetch skipped:', err);
+            }
+
+            tempSelectedPlaceTypes = placeJa.types || [];
+            tempFetchedJaName = placeJa.displayName || '';
+            tempFetchedEnName = enName;
+
+            const lat = placeJa.location ? placeJa.location.lat() : e.latLng.lat();
+            const lng = placeJa.location ? placeJa.location.lng() : e.latLng.lng();
+
+            openRegistrationInfoWindow(tempFetchedJaName, lat, lng, null);
+          } catch (err) {
+            console.warn('Place detail fetch fallback:', err);
+            tempSelectedPlaceTypes = [];
+            tempPlaceId = null;
+            tempFetchedJaName = '';
+            tempFetchedEnName = '';
+            openRegistrationInfoWindow('', e.latLng.lat(), e.latLng.lng(), null);
+          }
+        } else {
+          tempSelectedPlaceTypes = [];
+          tempPlaceId = null;
+          tempFetchedJaName = '';
+          tempFetchedEnName = '';
+          openRegistrationInfoWindow('', e.latLng.lat(), e.latLng.lng(), null);
+        }
+      });
+
+      // 起動時にスプレッドシートからデータを取得
+      await fetchSpotsFromCloud();
+    }
+
+    window.gm_authFailure = function() {
+      alert('Google Maps APIの認証エラーが発生しました。APIキーを確認してください。');
+    };
+
+    function switchTab(tabName, btn) {
+      document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+
+      document.querySelectorAll('.tab-content').forEach(c => {
+        c.classList.remove('active');
+        c.style.display = 'none';
+      });
+
+      const target = document.getElementById('tab-' + tabName);
+      target.classList.add('active');
+      target.style.display = 'flex';
+    }
+
+    window.onCategoryChangeInInfoWindow = function() {
+      const cat = document.getElementById('infowindowCategory').value;
+      const wantSection = document.getElementById('section-want');
+      const visitedSection = document.getElementById('section-visited');
+
+      if (cat === 'both-visited') {
+        wantSection.style.display = 'none';
+        visitedSection.style.display = 'block';
+      } else {
+        wantSection.style.display = 'block';
+        visitedSection.style.display = 'none';
+      }
+    };
+
+    window.formatAndValidateDateInput = function(inputEl) {
+      let val = inputEl.value.replace(/\D/g, '');
+      if (val.length === 8) {
+        inputEl.value = val.slice(0, 4) + '/' + val.slice(4, 6) + '/' + val.slice(6, 8);
+      }
+    };
+
+    function openRegistrationInfoWindow(name, lat, lng, existingSpot) {
+      if (activeInfoWindow) activeInfoWindow.close();
+
+      const isEdit = !!existingSpot;
+      const spotId = isEdit ? existingSpot.id : '';
+      const spotName = isEdit ? existingSpot.name : (name || '');
+      const spotCategory = isEdit ? existingSpot.category : 'naka-want';
+
+      if (isEdit) {
+        tempSelectedPlaceTypes = existingSpot.placeTypes || [];
+        tempPlaceId = existingSpot.placeId || null;
+        tempFetchedJaName = existingSpot.nameJa || existingSpot.name;
+        tempFetchedEnName = existingSpot.nameEn || existingSpot.name;
+      } else {
+        if (!tempFetchedJaName) tempFetchedJaName = name;
+        if (!tempFetchedEnName) tempFetchedEnName = name;
+      }
+
+      const wantMemo = isEdit ? (existingSpot.wantMemo || '') : '';
+      const nakaRating = isEdit ? (existingSpot.nakaRating || 8) : 8;
+      const nakaMemo = isEdit ? (existingSpot.nakaMemo || '') : '';
+      const larsRating = isEdit ? (existingSpot.larsRating || 8) : 8;
+      const larsMemo = isEdit ? (existingSpot.larsMemo || '') : '';
+      const visitedDate = isEdit ? (existingSpot.visitedDate || new Date().toISOString().slice(0, 10).replace(/-/g, '/')) : new Date().toISOString().slice(0, 10).replace(/-/g, '/');
+
+      const isVisited = (spotCategory === 'both-visited');
+
+      const contentString = `
+        <div style="width: 320px; padding: 6px; font-family: sans-serif; color: #2F3632;">
+          <h3 style="font-size: 0.96rem; margin-bottom: 10px; font-weight: bold;">
+            ${isEdit ? '✏️ スポットを編集' : '📍 新規スポットを登録'}
+          </h3>
+          
+          <div style="margin-bottom: 8px;">
+            <label style="font-size: 0.76rem; font-weight: 600; display: block; margin-bottom: 3px;">スポット名（ベース）</label>
+            <input type="text" id="infowindowName" value="${escapeHtml(spotName)}" placeholder="Spot Name" style="width: 100%; padding: 7px; border: 1px solid #ccc; border-radius: 5px; font-size: 0.86rem;" />
+          </div>
+
+          <div style="background: #FAF9F6; padding: 8px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #E2E0D8; font-size: 0.75rem; color: var(--text-muted);">
+            <div style="font-weight: bold; margin-bottom: 4px; color: var(--text-main);">🌐 収集された言語データ（確認用）</div>
+            <div>🇯🇵 収集日本語: <span style="color:var(--text-main); font-weight:600;">${escapeHtml(tempFetchedJaName)}</span></div>
+            <div style="margin-top: 2px;">🇬🇧 収集英語名: <span style="color:var(--text-main); font-weight:600;">${escapeHtml(tempFetchedEnName)}</span></div>
+          </div>
+
+          <div style="margin-bottom: 10px;">
+            <label style="font-size: 0.76rem; font-weight: 600; display: block; margin-bottom: 3px;">ステータス</label>
+            <select id="infowindowCategory" onchange="onCategoryChangeInInfoWindow()" style="width: 100%; padding: 7px; border: 1px solid #ccc; border-radius: 5px; font-size: 0.84rem; background: #fff;">
+              <option value="naka-want" ${spotCategory === 'naka-want' ? 'selected' : ''}>🟠 Naka Want</option>
+              <option value="lars-want" ${spotCategory === 'lars-want' ? 'selected' : ''}>🔵 Lars Want</option>
+              <option value="grutto" ${spotCategory === 'grutto' ? 'selected' : ''}>🟢 ぐるっと</option>
+              <option value="both-visited" ${spotCategory === 'both-visited' ? 'selected' : ''}>🟡 Visited (2人行った)</option>
+            </select>
+          </div>
+
+          <div id="section-want" style="display: ${isVisited ? 'none' : 'block'}; margin-bottom: 10px;">
+            <label style="font-size: 0.76rem; font-weight: 600; display: block; margin-bottom: 3px;">メモ（行きたい理由・営業時間など）</label>
+            <textarea id="infoWantMemo" rows="3" placeholder="行きたい理由、営業時間、予約要否など" style="width: 100%; padding: 7px; border: 1px solid #ccc; border-radius: 5px; font-size: 0.82rem; resize: vertical;">${escapeHtml(wantMemo)}</textarea>
+          </div>
+
+          <div id="section-visited" style="display: ${isVisited ? 'block' : 'none'};">
+            <div style="margin-bottom: 8px;">
+              <label style="font-size: 0.76rem; font-weight: 600; display: block; margin-bottom: 3px;">📅 訪問日 (YYYY/MM/DD or YYYYMMDD)</label>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <input type="text" id="infoVisitedDate" value="${visitedDate}" oninput="formatAndValidateDateInput(this)" placeholder="2020/01/01" style="flex:1; padding: 6px; border: 1px solid #ccc; border-radius: 5px; font-size: 0.82rem; background: #fff;" />
+                <button type="button" class="btn-small" onclick="document.getElementById('infoVisitedDate').value = new Date().toISOString().slice(0, 10).replace(/-/g, '/')">今日</button>
+              </div>
+            </div>
+
+            <div style="background: #FAF9F6; padding: 8px; border-radius: 6px; margin-bottom: 8px; border: 1px solid #E2E0D8;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <span style="font-size: 0.78rem; font-weight: bold; color: #C86D51;">🟠 Nakaさん</span>
+                <span style="font-size: 0.82rem; font-weight: bold; color: #C86D51;">★ <span id="nakaRatingVal">${nakaRating}</span> / 10</span>
+              </div>
+              <input type="range" id="infoNakaRating" min="1" max="10" value="${nakaRating}" style="width: 100%; accent-color: #C86D51; margin-bottom: 6px; cursor: pointer;" oninput="document.getElementById('nakaRatingVal').textContent = this.value" />
+              <textarea id="infoNakaMemo" rows="2" placeholder="Nakaさんの感想・メモ" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.8rem; resize: vertical;">${escapeHtml(nakaMemo)}</textarea>
+            </div>
+
+            <div style="background: #FAF9F6; padding: 8px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #E2E0D8;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <span style="font-size: 0.78rem; font-weight: bold; color: #5B8FB9;">🔵 Larsさん</span>
+                <span style="font-size: 0.82rem; font-weight: bold; color: #5B8FB9;">★ <span id="larsRatingVal">${larsRating}</span> / 10</span>
+              </div>
+              <input type="range" id="infoLarsRating" min="1" max="10" value="${larsRating}" style="width: 100%; accent-color: #5B8FB9; margin-bottom: 6px; cursor: pointer;" oninput="document.getElementById('larsRatingVal').textContent = this.value" />
+              <textarea id="infoLarsMemo" rows="2" placeholder="Larsさんの感想・メモ" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.8rem; resize: vertical;">${escapeHtml(larsMemo)}</textarea>
+            </div>
+          </div>
+
+          <button onclick="saveSpotFromInfoWindow('${spotId}', ${lat}, ${lng})" style="width: 100%; background: #2F3632; color: #fff; border: none; padding: 9px; border-radius: 5px; font-weight: bold; font-size: 0.86rem; cursor: pointer;">保存する</button>
+        </div>
+      `;
+
+      const infowindow = new google.maps.InfoWindow({
+        content: contentString,
+        position: { lat: lat, lng: lng }
+      });
+
+      infowindow.open(map);
+      activeInfoWindow = infowindow;
+    }
+
+    window.saveSpotFromInfoWindow = async function(id, lat, lng) {
+      const name = document.getElementById('infowindowName').value.trim();
+      if (!name) {
+        alert('スポット名を入力してください。');
+        return;
+      }
+
+      const category = document.getElementById('infowindowCategory').value;
+
+      if (category === 'both-visited') {
+        const dateVal = document.getElementById('infoVisitedDate').value.trim();
+        const rawDigits = dateVal.replace(/\D/g, '');
+        if (rawDigits.length !== 8) {
+          alert('Please enter the date in YYYYMMDD format (8 digits).');
+          return;
+        }
+      }
+
+      const wantMemoVal = document.getElementById('infoWantMemo').value.trim();
+      const nakaMemoVal = document.getElementById('infoNakaMemo').value.trim();
+      const larsMemoVal = document.getElementById('infoLarsMemo').value.trim();
+
+      const spotData = {
+        id: id || Date.now().toString(),
+        name: name,
+        nameJa: tempFetchedJaName || name,
+        nameEn: tempFetchedEnName || name,
+        placeId: tempPlaceId || '',
+        lat: parseFloat(lat),
+        lng: parseFloat(lng),
+        category: category,
+        placeTypes: tempSelectedPlaceTypes, 
+        wantMemo: wantMemoVal,
+        visitedDate: category === 'both-visited' ? document.getElementById('infoVisitedDate').value : '',
+        nakaRating: parseInt(document.getElementById('infoNakaRating').value, 10),
+        nakaMemo: nakaMemoVal,
+        larsRating: parseInt(document.getElementById('infoLarsRating').value, 10),
+        larsMemo: larsMemoVal
+      };
+
+      if (id) {
+        const index = spots.findIndex(s => s.id === id);
+        if (index !== -1) {
+          spotData.nameJa = spotData.nameJa || spots[index].nameJa || name;
+          spotData.nameEn = spotData.nameEn || spots[index].nameEn || name;
+          spots[index] = spotData;
+        }
+      } else {
+        spots.unshift(spotData);
+      }
+
+      if (activeInfoWindow) activeInfoWindow.close();
+      
+      // クラウド（スプレッドシート）へ即時同期保存
+      await syncSpotsToCloud();
+      renderAll();
+      
+      if (isMapModeMobile) {
+        toggleMobileView();
+      }
+    };
+
+    async function deleteSpot(id, event) {
+      event.stopPropagation();
+      if (!confirm('このスポットを削除しますか？')) return;
+      spots = spots.filter(s => s.id !== id);
+      await syncSpotsToCloud();
+      renderAll();
+    }
+
+    async function moveSpot(index, direction, event) {
+      event.stopPropagation();
+      const targetIndex = index + direction;
+      if (targetIndex < 0 || targetIndex >= spots.length) return;
+
+      const temp = spots[index];
+      spots[index] = spots[targetIndex];
+      spots[targetIndex] = temp;
+
+      await syncSpotsToCloud();
+      renderAll();
+    }
+
+    function toggleCard(cardEl) {
+      cardEl.classList.toggle('expanded');
+    }
+
+    function setFilter(filterKey, btn) {
+      currentFilter = filterKey;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderAll();
+    }
+
+    function renderAll() {
+      markers.forEach(m => m.setMap(null));
+      markers = [];
+
+      const listEl = document.getElementById('spotList');
+      listEl.innerHTML = '';
+
+      let filtered = [...spots];
+
+      const placeKeyMap = new Map();
+      spots.forEach(s => {
+        const key = s.placeId || `${parseFloat(s.lat).toFixed(4)}_${parseFloat(s.lng).toFixed(4)}`;
+        if (!placeKeyMap.has(key)) placeKeyMap.set(key, []);
+        placeKeyMap.get(key).push(s);
+      });
+      
+      if (currentFilter === 'grutto') {
+        filtered = filtered.filter(s => s.category === 'grutto');
+      } else if (currentFilter === 'grutto-done') {
+        filtered = spots.filter(s => {
+          const key = s.placeId || `${parseFloat(s.lat).toFixed(4)}_${parseFloat(s.lng).toFixed(4)}`;
+          const group = placeKeyMap.get(key) || [];
+          const hasGrutto = group.some(item => item.category === 'grutto');
+          const hasVisited = group.some(item => item.category === 'both-visited');
+
+          if (hasGrutto && hasVisited) {
+            return s.category === 'grutto' || s.category === 'both-visited';
+          } else if (hasGrutto) {
+            return s.category === 'grutto';
+          }
+          return false;
+        });
+      } else if (currentFilter !== 'all') {
+        filtered = filtered.filter(s => s.category === currentFilter);
+      }
+
+      const localQuery = document.getElementById('local-search').value.trim().toLowerCase();
+      if (localQuery) {
+        filtered = filtered.filter(s => {
+          const targetText = (s.name + ' ' + (s.nameJa || '') + ' ' + (s.nameEn || '') + ' ' + (s.wantMemo || '') + ' ' + (s.nakaMemo || '') + ' ' + (s.larsMemo || '')).toLowerCase();
+          return targetText.includes(localQuery);
+        });
+      }
+
+      document.getElementById('spotCountLabel').textContent = `全 ${filtered.length} 件`;
+
+      const sortVal = document.getElementById('sortOrder').value;
+      if (sortVal === 'date-desc') {
+        filtered.sort((a, b) => (b.visitedDate || '').localeCompare(a.visitedDate || ''));
+      } else if (sortVal === 'date-asc') {
+        filtered.sort((a, b) => (a.visitedDate || '9999-99-99').localeCompare(b.visitedDate || '9999-99-99'));
+      }
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = '<p style="text-align:center; color:#888; font-size:0.84rem; margin-top:30px;">該当するスポットがありません。<br>上の検索窓から探すか、地図上のアイコンをクリック！</p>';
+        return;
+      }
+
+      const displayLang = document.getElementById('displayLang').value;
+
+      let mapSpotsToRender = filtered;
+      if (currentFilter === 'grutto-done') {
+        mapSpotsToRender = [];
+        const processedKeys = new Set();
+
+        filtered.forEach(spot => {
+          const key = spot.placeId || `${parseFloat(spot.lat).toFixed(4)}_${parseFloat(spot.lng).toFixed(4)}`;
+          if (processedKeys.has(key)) return;
+          processedKeys.add(key);
+
+          const group = placeKeyMap.get(key) || [spot];
+          const hasGrutto = group.some(s => s.category === 'grutto');
+          const hasVisited = group.some(s => s.category === 'both-visited');
+
+          let representativeSpot = { ...spot };
+
+          if (hasGrutto && hasVisited) {
+            representativeSpot._customPinType = 'brown-pin';
+            mapSpotsToRender.push(representativeSpot);
+          } else if (hasGrutto) {
+            const gruttoSpot = group.find(s => s.category === 'grutto');
+            if (gruttoSpot) mapSpotsToRender.push(gruttoSpot);
+          }
+        });
+      } else if (currentFilter === 'all') {
+        mapSpotsToRender = [];
+        const processedKeys = new Set();
+
+        filtered.forEach(spot => {
+          const key = spot.placeId || `${parseFloat(spot.lat).toFixed(4)}_${parseFloat(spot.lng).toFixed(4)}`;
+          if (processedKeys.has(key)) return;
+          processedKeys.add(key);
+
+          const group = placeKeyMap.get(key) || [spot];
+          const hasGrutto = group.some(s => s.category === 'grutto');
+          const hasWant = group.some(s => s.category === 'naka-want' || s.category === 'lars-want');
+
+          if (hasGrutto && hasWant) {
+            const gruttoSpot = group.find(s => s.category === 'grutto');
+            if (gruttoSpot) mapSpotsToRender.push(gruttoSpot);
+          } else {
+            group.forEach(s => mapSpotsToRender.push(s));
+          }
+        });
+      }
+
+      const createCardHtml = (spot, actualIndex) => {
+        const latNum = parseFloat(spot.lat);
+        const lngNum = parseFloat(spot.lng);
+        if (isNaN(latNum) || isNaN(lngNum)) return '';
+
+        let meta = CATEGORY_META[spot.category] || CATEGORY_META['naka-want'];
+        let pinColor = meta.color;
+        let markerZIndex = 10;
+
+        if (spot._customPinType === 'brown-pin') {
+          pinColor = CATEGORY_META['brown-pin'].color;
+          markerZIndex = 100;
+        } else if (spot.category === 'both-visited') {
+          markerZIndex = 50;
+        }
+
+        const marker = new google.maps.Marker({
+          position: { lat: latNum, lng: lngNum },
+          map: map,
+          title: `${spot.name} (${meta.label})`,
+          icon: getPinIcon(pinColor),
+          zIndex: markerZIndex
+        });
+
+        marker.addListener('click', () => {
+          map.panTo(marker.getPosition());
+          if (isMapModeMobile) toggleMobileView();
+          openRegistrationInfoWindow(spot.name, latNum, lngNum, spot);
+        });
+        markers.push(marker);
+
+        const card = document.createElement('div');
+        card.className = 'spot-card';
+        card.onclick = () => {
+          map.panTo({ lat: latNum, lng: lngNum });
+          map.setZoom(16);
+          if (isMapModeMobile) toggleMobileView();
+          toggleCard(card);
+        };
+
+        let displayName = spot.name;
+        if (displayLang === 'ja') {
+          displayName = spot.nameJa || spot.name;
+        } else if (displayLang === 'en') {
+          displayName = spot.nameEn || spot.name;
+        }
+
+        let compactSub = '';
+        if (spot.category === 'both-visited') {
+          const dateStr = spot.visitedDate ? `📅 ${spot.visitedDate}` : '';
+          compactSub = `<div style="display:flex; gap:8px; align-items:center;"><span>${dateStr}</span> <span style="color:var(--color-naka-want);">Naka:★${spot.nakaRating}</span> <span style="color:var(--color-lars-want);">Lars:★${spot.larsRating}</span></div>`;
+        } else {
+          compactSub = `<span>${spot.wantMemo ? escapeHtml(spot.wantMemo).slice(0, 20) + '...' : 'メモなし'}</span>`;
+        }
+
+        let detailsHtml = '';
+        if (spot.category === 'both-visited') {
+          detailsHtml = `
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px;">📅 訪問日: ${spot.visitedDate || '未設定'}</div>
+            <div class="spot-ratings-summary">
+              <span style="color:var(--color-naka-want);">🟠 Naka: ★${spot.nakaRating} / 10</span>
+              <span style="color:var(--color-lars-want);">🔵 Lars: ★${spot.larsRating} / 10</span>
+            </div>
+            ${spot.nakaMemo ? `<div class="spot-memo-box"><strong>🟠 Naka:</strong> ${escapeHtml(spot.nakaMemo)}</div>` : ''}
+            ${spot.larsMemo ? `<div class="spot-memo-box"><strong>🔵 Lars:</strong> ${escapeHtml(spot.larsMemo)}</div>` : ''}
+          `;
+        } else {
+          detailsHtml = `
+            ${spot.wantMemo ? `<div class="spot-memo-box"><strong>メモ:</strong> ${escapeHtml(spot.wantMemo)}</div>` : '<div style="font-size:0.78rem; color:#888;">メモなし</div>'}
+          `;
+        }
+
+        const showOrderBtns = (sortVal === 'custom');
+
+        card.innerHTML = `
+          <div class="spot-header">
+            <div class="spot-title-area" onclick="event.stopPropagation(); map.panTo({lat:${latNum},lng:${lngNum}}); map.setZoom(16); if(isMapModeMobile) toggleMobileView();">
+              <div class="spot-title">${escapeHtml(displayName)}</div>
+            </div>
+            <div class="spot-controls-right">
+              <span class="badge ${meta.badge}">${meta.label}</span>
+              ${showOrderBtns ? `<button class="order-btn" onclick="moveSpot(${actualIndex}, -1, event)" title="上へ">⬆️</button>` : ''}
+              ${showOrderBtns ? `<button class="order-btn" onclick="moveSpot(${actualIndex}, 1, event)" title="下へ">⬇️</button>` : ''}
+            </div>
+          </div>
+          <div class="spot-compact-info">
+            ${compactSub}
+            <span style="font-size:0.7rem; color:#888;">▼ 詳細</span>
+          </div>
+          <div class="spot-details">
+            ${detailsHtml}
+            <div class="spot-actions">
+              <button class="btn-small" onclick="event.stopPropagation(); map.panTo({lat:${latNum},lng:${lngNum}}); map.setZoom(16); if(isMapModeMobile) toggleMobileView(); openRegistrationInfoWindow('${escapeHtml(spot.name)}', ${latNum}, ${lngNum}, ${JSON.stringify(spot).replace(/"/g, '&quot;')})">編集</button>
+              <button class="btn-small btn-delete" onclick="deleteSpot('${spot.id}', event)">削除</button>
+            </div>
+          </div>
+        `;
+        return card;
+      };
+
+      mapSpotsToRender.forEach((spot) => {
+        const actualIndex = spots.findIndex(s => s.id === spot.id);
+        const card = createCardHtml(spot, actualIndex);
+        if (card) listEl.appendChild(card);
+      });
+    }
+
+    function inferTypesFromText(spot) {
+      if (spot.placeTypes && spot.placeTypes.length > 0) return spot.placeTypes;
+      const text = (spot.name + ' ' + (spot.nakaMemo || '') + ' ' + (spot.larsMemo || '')).toLowerCase();
+      const inferred = [];
+      if (text.includes('美術館') || text.includes('アート') || text.includes('ギャラリー')) inferred.push('art_gallery');
+      if (text.includes('博物館') || text.includes('科学館') || text.includes('資料館') || text.includes('ミュージアム') || text.includes('展示') || text.includes('広報')) inferred.push('museum');
+      if (text.includes('城') || text.includes('史跡') || text.includes('歴史') || text.includes('遺跡') || text.includes('文化財')) inferred.push('historic_site');
+      if (text.includes('タワー') || text.includes('展望') || text.includes('スカイ')) inferred.push('observation_deck', 'tourist_attraction');
+      if (text.includes('庭園') || text.includes('植物園')) inferred.push('botanical_garden', 'park');
+      if (text.includes('公園')) inferred.push('park');
+      return inferred.length > 0 ? inferred : ['tourist_attraction'];
+    }
+
+    async function triggerAiDiscovery() {
+      const container = document.getElementById('aiResultContainer');
+      const btn = document.querySelector('.btn-ai-refresh');
+      
+      btn.textContent = '✨ Analyzing ★7-10 High-Rated Spots...';
+      btn.style.opacity = '0.7';
+
+      try {
+        const visitedSpots = spots.filter(s => s.category === 'both-visited');
+        const highRatedSpots = visitedSpots.filter(s => {
+          const avg = ((s.nakaRating || 0) + (s.larsRating || 0)) / 2;
+          return avg >= 7.0;
+        });
+
+        const typeWeights = {
+          'museum': 0, 'art_gallery': 0, 'historic_site': 0, 'tourist_attraction': 0,
+          'observation_deck': 0, 'park': 0, 'botanical_garden': 0, 'cultural_center': 0
+        };
+
+        highRatedSpots.forEach(spot => {
+          const avg = ((spot.nakaRating || 0) + (spot.larsRating || 0)) / 2;
+          let weight = 1;
+          if (avg >= 9.5) weight = 4;      
+          else if (avg >= 8.5) weight = 3; 
+          else if (avg >= 7.5) weight = 2; 
+
+          const types = inferTypesFromText(spot);
+          types.forEach(t => {
+            if (typeWeights.hasOwnProperty(t)) {
+              typeWeights[t] += weight;
+            }
+          });
+        });
+
+        const sortedPreferredTypes = Object.entries(typeWeights)
+          .filter(([_, score]) => score > 0)
+          .sort((a, b) => b[1] - a[1]);
+
+        let searchQuery = 'landmark museum observation deck historic site garden';
+        if (sortedPreferredTypes.length > 0) {
+          const topType = sortedPreferredTypes[0][0];
+          const queryMap = {
+            'museum': 'museum exhibition center cultural attraction',
+            'art_gallery': 'art gallery museum unique exhibition',
+            'historic_site': 'historic site landmark heritage spot',
+            'observation_deck': 'observation deck tower landmark view',
+            'tourist_attraction': 'unique landmark cultural attraction',
+            'botanical_garden': 'botanical garden scenic park',
+            'park': 'scenic park garden landmark'
+          };
+          searchQuery = queryMap[topType] || searchQuery;
+        }
+
+        const anchorLat = map.getCenter().lat();
+        const anchorLng = map.getCenter().lng();
+
+        const { Place } = await google.maps.importLibrary("places");
+        
+        const request = {
+          textQuery: searchQuery,
+          locationBias: {
+            center: { lat: anchorLat, lng: anchorLng },
+            radius: 15000
+          },
+          fields: ['displayName', 'formattedAddress', 'location', 'rating', 'types'],
+          maxResultCount: 20
+        };
+
+        const { places } = await Place.searchByText(request);
+
+        btn.textContent = '✨ Analyze ★7-10 High-Rated Spots & Discover';
+        btn.style.opacity = '1';
+
+        if (!places || places.length === 0) {
+          container.innerHTML = `<div class="ai-card"><h3>🔍 No spots found around this area</h3><p>Move the map to another area and try pressing the button again!</p></div>`;
+          return;
+        }
+
+        const INCLUDE_TYPES = ['museum', 'art_gallery', 'historic_site', 'tourist_attraction', 'observation_deck', 'park', 'botanical_garden', 'cultural_center'];
+        const EXCLUDE_TYPES = ['golf_course', 'campground', 'stadium', 'sports_complex', 'restaurant', 'cafe', 'bar', 'food', 'lodging', 'store', 'gas_station', 'parking', 'supermarket', 'convenience_store', 'amusement_center'];
+
+        const registeredNames = spots.map(s => s.name.trim().toLowerCase());
+
+        const validCandidates = places.filter(place => {
+          const pName = place.displayName || '';
+          if (registeredNames.includes(pName.trim().toLowerCase())) return false;
+          const types = place.types || [];
+          if (types.some(t => EXCLUDE_TYPES.includes(t))) return false;
+          return types.some(t => INCLUDE_TYPES.includes(t));
+        });
+
+        const scoredCandidates = validCandidates.map(place => {
+          const types = place.types || [];
+          let affinityScore = 0;
+          let matchedReasons = [];
+
+          types.forEach(t => {
+            if (typeWeights[t] && typeWeights[t] > 0) {
+              affinityScore += typeWeights[t];
+              if (TYPE_LABELS_JA[t] && !matchedReasons.includes(TYPE_LABELS_JA[t])) {
+                matchedReasons.push(TYPE_LABELS_JA[t]);
+              }
+            }
+          });
+
+          const googleRatingBonus = place.rating ? (place.rating * 0.2) : 0;
+
+          return {
+            place: place,
+            totalScore: affinityScore + googleRatingBonus,
+            affinityScore: affinityScore,
+            matchedReasons: matchedReasons
+          };
+        });
+
+        scoredCandidates.sort((a, b) => b.totalScore - a.totalScore);
+        const topRecommendations = scoredCandidates.slice(0, 5);
+
+        if (topRecommendations.length === 0) {
+          container.innerHTML = `<div class="ai-card"><h3>💡 No matching unregistered spots found</h3><p>Selected spots in this area seem to be already registered.</p></div>`;
+          return;
+        }
+
+        let preferenceSummary = '';
+        if (sortedPreferredTypes.length > 0) {
+          const topLabels = sortedPreferredTypes.slice(0, 2).map(([t, _]) => TYPE_LABELS_JA[t] || t).join('・');
+          preferenceSummary = `Based on high-rated spots (★7-10, ${highRatedSpots.length} items), we prioritized **「${topLabels}」** for you!`;
+        } else {
+          preferenceSummary = `Showing curated recommendations since there are few high-rated visited spots yet.`;
+        }
+
+        let html = `
+          <div class="ai-card" style="border-left: 4px solid var(--color-both-visited);">
+            <h3>✨ Curated Spots Matching Your Preferences</h3>
+            <p>${preferenceSummary}</p>
+          </div>`;
+
+        topRecommendations.forEach(item => {
+          const place = item.place;
+          const pName = place.displayName;
+          const pRating = place.rating ? `Google Rating: ★${place.rating}` : '';
+          const pAddr = place.formattedAddress || '';
+          const pLat = place.location.lat();
+          const pLng = place.location.lng();
+          const pTypesJson = JSON.stringify(place.types || []).replace(/"/g, '&quot;');
+
+          const reasonBadge = item.matchedReasons.length > 0
+            ? `<div class="match-tag">🎯 Matched Preference: ${item.matchedReasons.join(' / ')}</div>`
+            : `<div class="match-tag">✨ Curated Unique Spot</div>`;
+
+          html += `
+            <div class="ai-suggestion-item">
+              <div style="flex:1; overflow:hidden;">
+                ${reasonBadge}
+                <div style="font-weight:bold; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(pName)}</div>
+                <div style="font-size:0.72rem; color:var(--text-muted);">${pRating} | ${escapeHtml(pAddr)}</div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:4px;">
+                <button class="btn-small" onclick="map.panTo({lat:${pLat}, lng:${pLng}}); map.setZoom(16); tempSelectedPlaceTypes=${pTypesJson}; if(isMapModeMobile) toggleMobileView(); openRegistrationInfoWindow('${escapeHtml(pName).replace(/'/g, "\'")}', ${pLat}, ${pLng}, null);">Map</button>
+              </div>
+            </div>`;
+        });
+
+        container.innerHTML = html;
+
+      } catch (err) {
+        console.error("AI Discovery Error:", err);
+        btn.textContent = '✨ Analyze ★7-10 High-Rated Spots & Discover';
+        btn.style.opacity = '1';
+        container.innerHTML = `<div class="ai-card"><h3>⚠️ Error occurred during exploration</h3><p>${escapeHtml(err.message)}</p></div>`;
+      }
+    }
+
+    function exportData() {
+      const dataStr = JSON.stringify(spots, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const timestamp = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
+      
+      a.download = `NakaLars_OdekakeLog_${timestamp}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // インポートしたJSONデータをクラウド（スプレッドシート）へ反映させる
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (Array.isArray(imported)) {
+            spots = imported;
+            await syncSpotsToCloud(); // クラウドに一括保存
+            renderAll();
+            alert('データをスプレッドシートに読み込みました！');
+          }
+        } catch (err) {
+          alert('ファイルの読み込みに失敗しました。');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/['"&<>]/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
+    }
+  </script>
+
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDw8c1NW18Uc2hHxCZM5Jec5V_I3W4fmlQ&libraries=places&callback=initMap">
+  </script>
+</body>
+</html>
