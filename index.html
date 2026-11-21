@@ -496,7 +496,7 @@
   <button id="mobileToggleBtn" class="mobile-view-toggle" onclick="toggleMobileView()">🗺️ 地図を表示</button>
 
   <script>
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyNOF6ZXmj7LY4_UOhDrmD1qsXxBYjknJ93547XaI_SqrH9UvWGlzDIYlW3HnL4VPvGWQ/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyNOF6ZXmj7LY4_UOhDrmD1qsXxBYjknJ93547XaI_SqrH9UvWGlzDIYlW3HnL4VPvGWQ/exec';
     const LOCAL_BACKUP_KEY = 'odekake_log_backup_v1';
     const ACCESS_CODE_KEY = 'odekake_log_access_code_v1';
 
@@ -519,6 +519,107 @@
       return code;
     }
 
+    function saveLocalBackup(list) {
+      try {
+        localStorage.setItem(LOCAL_BACKUP_KEY, JSON.stringify(list));
+      } catch (e) {
+        console.warn('localStorage backup failed:', e);
+      }
+    }
+
+    function loadLocalBackup() {
+      try {
+        const raw = localStorage.getItem(LOCAL_BACKUP_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : null;
+      } catch (e) {
+        console.warn('localStorage load failed:', e);
+        return null;
+      }
+    }
+
+    // サーバ（スプレッドシート）からデータを一括取得
+    async function fetchSpotsFromCloud() {
+      let loadedFromCloud = false;
+      let code = getAccessCode(false);
+
+      if (code) {
+        try {
+          const urlWithCode = `${GAS_URL}${GAS_URL.includes('?') ? '&' : '?'}code=${encodeURIComponent(code)}`;
+          const res = await fetch(urlWithCode, { cache: 'no-store' });
+          if (!res.ok) {
+            throw new Error('HTTP status ' + res.status);
+          }
+          const data = await res.json();
+          if (data && data.unauthorized) {
+            try { localStorage.removeItem(ACCESS_CODE_KEY); } catch (e) {}
+            alert('合言葉が違います。もう一度入力してください。');
+            code = getAccessCode(true);
+            if (code) {
+              const retryUrl = `${GAS_URL}${GAS_URL.includes('?') ? '&' : '?'}code=${encodeURIComponent(code)}`;
+              const retryRes = await fetch(retryUrl, { cache: 'no-store' });
+              const retryData = await retryRes.json();
+              if (Array.isArray(retryData)) {
+                spots = retryData.map(s => {
+                  if (!s.nameJa) s.nameJa = s.name;
+                  if (!s.nameEn) s.nameEn = s.name;
+                  return s;
+                });
+                saveLocalBackup(spots);
+                loadedFromCloud = true;
+              }
+            }
+          } else if (Array.isArray(data)) {
+            spots = data.map(s => {
+              if (!s.nameJa) s.nameJa = s.name;
+              if (!s.nameEn) s.nameEn = s.name;
+              return s;
+            });
+            saveLocalBackup(spots);
+            loadedFromCloud = true;
+          }
+        } catch (err) {
+          console.warn('Cloud sync load failed:', err);
+        }
+      }
+
+      if (!loadedFromCloud) {
+        const backup = loadLocalBackup();
+        if (backup && backup.length > 0) {
+          spots = backup;
+        }
+      }
+      renderAll();
+    }
+
+    // サーバへデータを一括保存
+    async function syncSpotsToCloud() {
+      saveLocalBackup(spots);
+      const code = getAccessCode(false);
+      if (!code) {
+        alert('合言葉が未入力のため、スプレッドシートに保存されませんでした。');
+        return;
+      }
+      try {
+        const res = await fetch(GAS_URL, {
+          method: 'POST',
+          body: JSON.stringify({ code: code, spots: spots })
+        });
+        if (!res.ok) {
+          throw new Error('HTTP status ' + res.status);
+        }
+        const result = await res.json();
+        if (result && result.unauthorized) {
+          try { localStorage.removeItem(ACCESS_CODE_KEY); } catch (e) {}
+          alert('合言葉が間違っているため、スプレッドシートへ保存できませんでした。');
+        }
+      } catch (err) {
+        console.error('Cloud sync save failed:', err);
+        alert('スプレッドシートへの保存に失敗しました（ブラウザ内には一時控えを保存しました）。');
+      }
+    }
+    
     let map;
     let markers = [];
     let spots = [];
