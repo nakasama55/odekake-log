@@ -417,11 +417,11 @@
         <div class="sort-bar" style="margin-top: 6px;">
           <label>Filter:</label>
           <select id="filterSelect" class="sort-select" onchange="setFilter(this.value)">
-            <option value="want" selected>WANT</option>
-            <option value="all">ALL</option>
-            <option value="both-visited">VISITED</option>
-            <option value="grutto">ぐるっと</option>
-            <option value="grutto-done">ぐるっと済</option>
+            <option value="all" selected>All</option>
+            <option value="want">🟠🔵 Want</option>
+            <option value="both-visited">🟡 Visited</option>
+            <option value="grutto">🟢 ぐるっと</option>
+            <option value="grutto-done">🟤 ぐるっと済</option>
           </select>
         </div>
         
@@ -481,7 +481,7 @@
     let map;
     let markers = [];
     let spots = [];
-    let currentFilter = 'want';
+    let currentFilter = 'all';
     let activeInfoWindow = null;
     let tempSelectedPlaceTypes = [];
     let tempPlaceId = null;
@@ -842,8 +842,8 @@
               <option value="naka-want" ${spotCategory === 'naka-want' ? 'selected' : ''}>🟠 Naka Want</option>
               <option value="lars-want" ${spotCategory === 'lars-want' ? 'selected' : ''}>🔵 Lars Want</option>
               <option value="two-wants" ${spotCategory === 'two-wants' ? 'selected' : ''}>🟣 2 Wants</option>
+              <option value="both-visited" ${spotCategory === 'both-visited' ? 'selected' : ''}>🟡 Visited</option>
               <option value="grutto" ${spotCategory === 'grutto' ? 'selected' : ''}>🟢 ぐるっと</option>
-              <option value="both-visited" ${spotCategory === 'both-visited' ? 'selected' : ''}>🟡 Visited (2人行った)</option>
             </select>
           </div>
 
