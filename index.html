@@ -496,8 +496,28 @@
   <button id="mobileToggleBtn" class="mobile-view-toggle" onclick="toggleMobileView()">🗺️ 地図を表示</button>
 
   <script>
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyRr-P5yVat55UWjAyurCXQd_SXpRidHpRX8nD320ChV9m8IA6ZkjFpJI4nvnUPevrLIA/exec';
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyNOF6ZXmj7LY4_UOhDrmD1qsXxBYjknJ93547XaI_SqrH9UvWGlzDIYlW3HnL4VPvGWQ/exec';
     const LOCAL_BACKUP_KEY = 'odekake_log_backup_v1';
+    const ACCESS_CODE_KEY = 'odekake_log_access_code_v1';
+
+    function getAccessCode(forcePrompt = false) {
+      let code = '';
+      try {
+        code = localStorage.getItem(ACCESS_CODE_KEY) || '';
+      } catch (e) {}
+
+      if (!code || forcePrompt) {
+        const input = window.prompt('合言葉を入力してください：', code);
+        if (input === null) return '';
+        code = input.trim();
+        if (code) {
+          try {
+            localStorage.setItem(ACCESS_CODE_KEY, code);
+          } catch (e) {}
+        }
+      }
+      return code;
+    }
 
     let map;
     let markers = [];
