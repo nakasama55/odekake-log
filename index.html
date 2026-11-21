@@ -652,27 +652,50 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbyNOF6ZXmj7LY4_UOhDrmD1
     }
 
     // サーバ（スプレッドシート）からデータを一括取得
-    async function fetchSpotsFromCloud() {
+async function fetchSpotsFromCloud() {
       let loadedFromCloud = false;
-      try {
-        const res = await fetch(GAS_URL, { cache: 'no-store' });
-        if (!res.ok) {
-          throw new Error('HTTP status ' + res.status);
+      let code = getAccessCode(false);
+
+      if (code) {
+        try {
+          const urlWithCode = `${GAS_URL}${GAS_URL.includes('?') ? '&' : '?'}code=${encodeURIComponent(code)}`;
+          const res = await fetch(urlWithCode, { cache: 'no-store' });
+          if (!res.ok) {
+            throw new Error('HTTP status ' + res.status);
+          }
+          const data = await res.json();
+          if (data && data.unauthorized) {
+            try { localStorage.removeItem(ACCESS_CODE_KEY); } catch (e) {}
+            alert('合言葉が違います。もう一度入力してください。');
+            code = getAccessCode(true);
+            if (code) {
+              const retryUrl = `${GAS_URL}${GAS_URL.includes('?') ? '&' : '?'}code=${encodeURIComponent(code)}`;
+              const retryRes = await fetch(retryUrl, { cache: 'no-store' });
+              const retryData = await retryRes.json();
+              if (Array.isArray(retryData)) {
+                spots = retryData.map(s => {
+                  if (!s.nameJa) s.nameJa = s.name;
+                  if (!s.nameEn) s.nameEn = s.name;
+                  return s;
+                });
+                saveLocalBackup(spots);
+                loadedFromCloud = true;
+              }
+            }
+          } else if (Array.isArray(data)) {
+            spots = data.map(s => {
+              if (!s.nameJa) s.nameJa = s.name;
+              if (!s.nameEn) s.nameEn = s.name;
+              return s;
+            });
+            saveLocalBackup(spots);
+            loadedFromCloud = true;
+          } else {
+            console.warn('GAS returned non-array response:', data);
+          }
+        } catch (err) {
+          console.warn('Cloud sync load failed:', err);
         }
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          spots = data.map(s => {
-            if (!s.nameJa) s.nameJa = s.name;
-            if (!s.nameEn) s.nameEn = s.name;
-            return s;
-          });
-          saveLocalBackup(spots);
-          loadedFromCloud = true;
-        } else {
-          console.warn('GAS returned non-array response:', data);
-        }
-      } catch (err) {
-        console.warn('Cloud sync load failed:', err);
       }
 
       if (!loadedFromCloud) {
@@ -687,20 +710,30 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbyNOF6ZXmj7LY4_UOhDrmD1
     // サーバへデータを一括保存
     async function syncSpotsToCloud() {
       saveLocalBackup(spots);
+      const code = getAccessCode(false);
+      if (!code) {
+        alert('合言葉が未入力のため、スプレッドシートに保存されませんでした。');
+        return;
+      }
       try {
         const res = await fetch(GAS_URL, {
           method: 'POST',
-          body: JSON.stringify(spots)
+          body: JSON.stringify({ code: code, spots: spots })
         });
         if (!res.ok) {
           throw new Error('HTTP status ' + res.status);
+        }
+        const result = await res.json();
+        if (result && result.unauthorized) {
+          try { localStorage.removeItem(ACCESS_CODE_KEY); } catch (e) {}
+          alert('合言葉が間違っているため、スプレッドシートへ保存できませんでした。');
         }
       } catch (err) {
         console.error('Cloud sync save failed:', err);
         alert('スプレッドシートへの保存に失敗しました（ブラウザ内には一時控えを保存しました）。');
       }
     }
-
+    
     const CATEGORY_META = {
       'naka-want':    { label: 'Naka Want', color: '#C86D51', badge: 'badge-naka-want' },
       'lars-want':    { label: 'Lars Want', color: '#5B8FB9', badge: 'badge-lars-want' },
